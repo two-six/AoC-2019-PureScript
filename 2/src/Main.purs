@@ -68,7 +68,7 @@ computeG :: Array Int -> Array Int
 computeG arr = do
   x <- 0 .. (ln-1)
   y <- 0 .. (ln-1)
-  guard $ (fromMaybe 0 $ head $ cmt(modifiedArray x y arr) 0) == 19690720
+  guard $ (head $ cmt(modifiedArray x y arr) 0) == Just(19690720)
   pure (100 * x + y)
   where
     ln = length arr
