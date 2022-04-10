@@ -1,0 +1,5 @@
+* Day 1
+State monad proved to be useful in this one. Pretty trivial.
+
+* Day 2
+=fromMaybe= hell 🔥. A lot of array copying, should've used mutable arrays there. Otherwise not that bad.
