@@ -5,5 +5,4 @@ State monad proved to be useful in this one. Pretty trivial.
 A lot of array copying, should've maybe used mutable arrays there. Otherwise not that bad.
 
 * Day 3
-Maps and Tuples. A lot of them.
-Proved to be a little bit tricky at first.
+Maps and Tuples. Proved to be a little bit tricky at first.
