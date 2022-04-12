@@ -6,3 +6,6 @@ A lot of array copying, should've maybe used mutable arrays there. Otherwise not
 
 * Day 3
 Maps and Tuples. Proved to be a little bit tricky at first.
+
+* Day 4
+Easy one, just some guards.
