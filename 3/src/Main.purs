@@ -19,7 +19,8 @@ import Node.FS.Sync (readTextFile)
 main :: Effect Unit
 main = do
   text <- readTextFile UTF8 "input.txt"
-  log $ (show $ silver text)
+  log $ "Silver: " <> (show $ silver text)
+      <> "\nGold: " <> (show $ gold text)
 
 silver :: String -> Int
 silver str =
@@ -31,6 +32,55 @@ silver str =
         $ Map.filter (\v -> v == 2)
         $ placeWires
         $ (readWires str)
+
+gold :: String -> Int
+gold str =
+   fromMaybe 0 $ head $ sort $ lenghts wires crosses
+  where
+    wires = readWires str
+    crosses = foldMap (\v -> [v])
+              $ Map.keys
+              $ Map.filter (\v -> v == 2)
+              $ placeWires
+              $ wires
+    lenghts :: Array (Array (Tuple String Int)) -> Array (Tuple Int Int) -> Array Int
+    lenghts ains xy = map (\v -> addStepsToCross ains v) xy
+
+addStepsToCross :: Array (Array (Tuple String Int)) -> Tuple Int Int -> Int
+addStepsToCross [] _ = 0
+addStepsToCross ains fxy =
+    (+) (stepsToCross ins (Tuple 0 0) (Tuple x y)) (addStepsToCross r fxy)
+  where
+    x = fst fxy
+    y = snd fxy
+    ins = fromMaybe [] $ head ains
+    r = fromMaybe [] $ tail ains
+
+stepsToCross :: Array (Tuple String Int) -> Tuple Int Int -> Tuple Int Int -> Int
+stepsToCross ains xy fxy =
+    if y == fy && ((nx >= fx && x <= fx) || (nx <= fx && x >= fx)) then
+      if x > fx then x - fx else fx - x
+    else if  x == fx && ((ny >= fy && y < fy) || (ny <= fy && y > fy)) then
+      if y > fy then y - fy else fy - y
+    else
+      v + (stepsToCross r (Tuple nx ny) fxy)
+  where
+    x = fst xy
+    y = snd xy
+    ins = fromMaybe (Tuple "" 0) $ head ains
+    r = fromMaybe [] $ tail ains
+    d = fst ins
+    v = snd ins
+    fx = fst fxy
+    fy = snd fxy
+    nx = case d of
+         "R" -> x + v
+         "L" -> x - v
+         _   -> x
+    ny = case d of
+         "U" -> y + v
+         "D" -> y - v
+         _   -> y
 
 
 readWires :: String -> Array (Array (Tuple String Int))
