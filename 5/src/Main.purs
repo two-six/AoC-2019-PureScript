@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array (drop, dropEnd, head, index, length, modifyAt, reverse, takeEnd)
 import Data.Int (decimal, fromString, toStringAs)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), joinWith, split)
 import Effect (Effect)
 import Effect.Console (log)
@@ -26,7 +26,7 @@ main = do
   log (show $ silver text)
 
 readNumbers :: String -> Array Int
-readNumbers = map (maybe 0 identity <<< fromString) <<< split (Pattern ",")
+readNumbers = map (fromMaybe 0 <<< fromString) <<< split (Pattern ",")
 
 runIns :: Array Int -> Int -> Array Int
 runIns arr n = drop n arr
