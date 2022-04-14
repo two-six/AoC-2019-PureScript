@@ -40,9 +40,6 @@ getValue ind m arr = do
     1 -> pure a
     _ -> Nothing
 
-addTwoValues :: Maybe Int
-addTwoValues = (+) <$> (Just 2) <*> (Just 4)
-
 modifyArray :: Array Int -> Int -> Instruction -> Array Int
 modifyArray arr n (Instruction ins) =
   let
@@ -68,6 +65,11 @@ modifyArray arr n (Instruction ins) =
           <$> getValue (n) f1 arr
           <*> getValue (n+1) f2 arr)
           arr
+    3 -> fromMaybe []
+         $ modifyAt
+         (fromMaybe (-1) (getValue n 0 arr))
+         (\_ -> 1)
+         arr
     _ -> []
 
 silver :: String -> Int
