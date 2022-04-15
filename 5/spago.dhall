@@ -2,7 +2,6 @@
 , dependencies =
   [ "arrays"
   , "console"
-  , "control"
   , "effect"
   , "integers"
   , "maybe"

@@ -3,6 +3,7 @@ State monad proved to be useful in this one. Pretty trivial.
 
 * Day 2
 A lot of array copying, should've maybe used mutable arrays there. Otherwise not that bad.
+Not really needed to use Writer Monad here, but I just wanted to experiment 😅
 
 * Day 3
 Maps and Tuples. Proved to be a little bit tricky at first.

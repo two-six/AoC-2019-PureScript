@@ -7,7 +7,7 @@ import Control.Monad.State.Class (modify)
 import Data.Array (filter)
 import Data.Foldable (traverse_)
 import Data.Int (fromString)
-import Data.Maybe (maybe)
+import Data.Maybe (fromMaybe)
 import Data.String (Pattern(..), split)
 import Effect (Effect)
 import Effect.Class.Console (log)
@@ -21,7 +21,7 @@ main = do
                <> "\nGold: " <> (show $ gold text)
 
 readNumbers :: String -> Array Int
-readNumbers = map (maybe 0 identity <<< fromString) <<< filter (\c -> c /= "") <<< split (Pattern "\n")
+readNumbers = map (fromMaybe 0 <<< fromString) <<< filter (\c -> c /= "") <<< split (Pattern "\n")
 
 calculate :: Array Int -> State Int Unit
 calculate = traverse_ \n -> modify \sum -> sum + (n/3-2)
