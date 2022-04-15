@@ -2,8 +2,6 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Writer (Writer, execWriter)
-import Control.Monad.Writer.Class (tell)
 import Data.Array (drop, dropEnd, head, index, length, modifyAt, reverse, takeEnd)
 import Data.Int (decimal, fromString, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -74,34 +72,13 @@ modifyArray arr n (Instruction ins) =
          arr
     _ -> []
 
-
-doComputations :: Array Int -> Int -> Maybe Instruction -> Writer (Array Int) (Array Int)
-doComputations arr n Nothing = doComputations arr n (instruction <$> head arr)
-doComputations arr n (Just (Instruction {opcode: 4})) = do
-  tell [fromMaybe 0 (getValue (n+1) 0 arr)]
-  doComputations arr (n+2) nextIns
-    where
-      nextIns = instruction
-                <$> index arr (n+2)
-doComputations arr n (Just (Instruction ins)) = do
-  case ins.opcode of
-    1 -> doComputations (modifyArray arr (n+1) (Instruction ins)) (n+4) (nextIns (n+4))
-    2 -> doComputations (modifyArray arr (n+1) (Instruction ins)) (n+4) (nextIns (n+4))
-    3 -> doComputations (modifyArray arr (n+1) (Instruction ins)) (n+2) (nextIns (n+2))
-    _ -> pure arr
-  where
-    nextIns :: Int -> Maybe Instruction
-    nextIns n' = instruction
-                <$> index arr n'
-
-
-silver :: String -> Array Int
+silver :: String -> Int
 silver str =
   let
     nums = readNumbers str
-    res = execWriter $ doComputations nums 0 Nothing
+
   in
-    res
+   fromMaybe 99 $ head nums
 
 opcode :: Int -> Maybe Int
 opcode ins = do
@@ -145,10 +122,7 @@ insert0Until x arr =
 
 instruction :: Int -> Instruction
 instruction n =
-  Instruction { opcode: opc
-              , modes:  mod
-              }
-  where
+  let
     opc = fromMaybe 100
           $ opcode n
     mod = if n == 2 || n == 1 then
@@ -162,3 +136,7 @@ instruction n =
                  4 -> insert0Until 1
                  _ -> insert0Until 0
                <$> rest n
+  in
+   Instruction { opcode: opc
+               , modes:  mod
+               }

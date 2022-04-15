@@ -10,6 +10,7 @@
   , "node-fs"
   , "prelude"
   , "strings"
+  , "transformers"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
