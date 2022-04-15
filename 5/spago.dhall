@@ -2,7 +2,6 @@
 , dependencies =
   [ "arrays"
   , "console"
-  , "control"
   , "effect"
   , "integers"
   , "maybe"
@@ -11,6 +10,7 @@
   , "prelude"
   , "strings"
   , "transformers"
+  , "tuples"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

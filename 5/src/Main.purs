@@ -2,12 +2,13 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Writer (Writer, execWriter)
+import Control.Monad.Writer (Writer, execWriter, runWriter)
 import Control.Monad.Writer.Class (tell)
-import Data.Array (drop, dropEnd, head, index, length, modifyAt, reverse, takeEnd)
+import Data.Array (drop, dropEnd, head, index, last, length, modifyAt, reverse, takeEnd)
 import Data.Int (decimal, fromString, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), joinWith, split)
+import Data.Tuple (fst)
 import Effect (Effect)
 import Effect.Console (log)
 import Node.Encoding (Encoding(..))
@@ -25,7 +26,7 @@ main = do
   text <- readTextFile UTF8 "input.txt"
   -- log $ "Silver: " <> (show $ silver text)
   --     <> "\nGold: " <> (show $ gold text)
-  log (show $ silver text)
+  log $ "Silver: " <> (show $ silver text)
 
 readNumbers :: String -> Array Int
 readNumbers = map (fromMaybe 0 <<< fromString) <<< split (Pattern ",")
@@ -36,24 +37,22 @@ runIns arr n = drop n arr
 getValue :: Int -> Int -> Array Int -> Maybe Int
 getValue ind m arr = do
   a <- index arr ind
-  x <- index arr a
   case m of
-    0 -> pure x
+    0 -> index arr a
     1 -> pure a
     _ -> Nothing
 
 modifyArray :: Array Int -> Int -> Instruction -> Array Int
 modifyArray arr n (Instruction ins) =
   let
-    ms = fromMaybe [] (ins.modes)
-    f1 = fromMaybe 2 $ head ms
-    f2 = fromMaybe 2 $ head $ drop 1 ms
-    f3 = fromMaybe 2 $ head $ drop 2 ms
+    ms = fromMaybe [] ins.modes
+    f1 = fromMaybe 0 $ head ms
+    f2 = fromMaybe 0 $ head $ drop 1 ms
   in
   case ins.opcode of
-    1 -> fromMaybe []
+    1 -> fromMaybe [f1, f2]
          $ modifyAt
-          (fromMaybe (-1) (getValue (n+2) f3 arr))
+          (fromMaybe (-1) (getValue (n+2) 1 arr))
           (\_ -> fromMaybe (-1)
           $ (+)
           <$> getValue (n) f1 arr
@@ -61,7 +60,7 @@ modifyArray arr n (Instruction ins) =
           arr
     2 -> fromMaybe []
          $ modifyAt
-          (fromMaybe (-1) (getValue (n+2) f3 arr))
+          (fromMaybe (-1) (getValue (n+2) 1 arr))
           (\_ -> fromMaybe (-1)
           $ (*)
           <$> getValue (n) f1 arr
@@ -69,7 +68,7 @@ modifyArray arr n (Instruction ins) =
           arr
     3 -> fromMaybe []
          $ modifyAt
-         (fromMaybe (-1) (getValue n 0 arr))
+         (fromMaybe (-1) $ index arr n)
          (\_ -> 1)
          arr
     _ -> []
@@ -84,7 +83,10 @@ doComputations arr n (Just (Instruction {opcode: 4})) = do
       nextIns = instruction
                 <$> index arr (n+2)
 doComputations arr n (Just (Instruction ins)) = do
-  case ins.opcode of
+  if n >= length arr then
+    pure arr
+  else
+    case ins.opcode of
     1 -> doComputations (modifyArray arr (n+1) (Instruction ins)) (n+4) (nextIns (n+4))
     2 -> doComputations (modifyArray arr (n+1) (Instruction ins)) (n+4) (nextIns (n+4))
     3 -> doComputations (modifyArray arr (n+1) (Instruction ins)) (n+2) (nextIns (n+2))
@@ -95,11 +97,13 @@ doComputations arr n (Just (Instruction ins)) = do
                 <$> index arr n'
 
 
-silver :: String -> Array Int
+silver :: String -> Int
 silver str =
   let
     nums = readNumbers str
-    res = execWriter $ doComputations nums 0 Nothing
+    farr = fst $ runWriter $ doComputations nums 0 Nothing
+    sarr = execWriter $ doComputations farr 0 Nothing
+    res = fromMaybe 0 $ last sarr
   in
     res
 
