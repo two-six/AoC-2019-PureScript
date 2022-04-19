@@ -5,15 +5,15 @@ import Prelude
 import Control.Comonad.Cofree ((:<))
 import Control.Monad.State (State, execState, modify)
 import Data.Array (head, last)
-import Data.Foldable (traverse_)
+import Data.Foldable (foldl, traverse_)
 import Data.List (List(..), (:))
 import Data.List (length, singleton) as Li
 import Data.Map (Map)
-import Data.Map (empty, filterKeys, insertWith) as Map
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Map (empty, insertWith, lookup) as Map
+import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.String (Pattern(..), split, trim)
 import Data.Tree (Tree, showTree)
-import Data.Tree.Zipper (findDown, fromTree, insertChild, parents, root, toTree)
+import Data.Tree.Zipper (Loc, findDown, fromTree, insertChild, parents, root, toTree, up)
 import Effect (Effect)
 import Effect.Console (log)
 import Node.Encoding (Encoding(..))
@@ -22,44 +22,12 @@ import Node.FS.Sync (readTextFile)
 main :: Effect Unit
 main = do
   text <- readTextFile UTF8 "input.txt"
-  log $ (show $ createMap text)
+  log $ "Silver: " <> (show $ silver text)
+      <> "\nGold: " <> (show $ gold text)
 
 showTreeMaybe :: Maybe (Tree String) -> String
 showTreeMaybe (Just x) = showTree x
 showTreeMaybe Nothing = "Nothing"
-
-sampleTree :: Tree Int
-sampleTree =
-  1 :<
-      (2 :< Nil)
-    : (3 :< Nil)
-    : (4 :<
-          (5 :< Nil)
-        : (6 :<
-            (7 :< Nil) : Nil)
-        : (8 :< Nil)
-        : Nil
-      )
-    : Nil
-
-mySampleTree :: Tree String
-mySampleTree =
-    "COM" :<
-      ("B" :<
-              ("G" :<
-                    ("H" :< Nil)
-                    : Nil)
-            : ("C" :<
-                    ("D" :<
-                            ("I" :< Nil)
-                          : ("E" :<
-                                  ("F" :< Nil)
-                                : Nil)
-                          : Nil)
-                  : Nil)
-            : Nil
-      ) : Nil
-
 
 modifyTree :: Tree String -> String -> String -> Maybe (Tree String)
 modifyTree t f i = do
@@ -67,22 +35,20 @@ modifyTree t f i = do
   let ins = insertChild (i :< Nil) nd
   pure $ toTree $ root ins
 
-myModifiedTree :: Maybe (Tree String)
-myModifiedTree = do
-  f1 <- modifyTree mySampleTree "E" "J"
-  f2 <- modifyTree f1 "J" "K"
-  f3 <- modifyTree f2 "K" "L"
-  pure f3
+modifyTreeList :: Maybe (Tree String) -> String -> List String -> Maybe (Tree String)
+modifyTreeList t _ Nil = t
+modifyTreeList (Just t) f (x:xs) = modifyTreeList (modifyTree t f x) f xs
+modifyTreeList Nothing _ _ = Nothing
 
-checkParents :: String -> Maybe Int
-checkParents str = do
-  let x = mySampleTree
-  nd <- findDown str $ fromTree x
+getTreeLength :: Tree String -> String -> Maybe Int
+getTreeLength t str = do
+  nd <- findDown str $ fromTree t
   pure $ Li.length $ parents nd
 
 createMap :: String -> Map String (List String)
 createMap str =
-  let
+  execState (crtMap tup) Map.empty
+  where
     ins = split (Pattern "\n") $ trim str
     tup = map (\v -> split(Pattern ")") v) ins
     crtMap :: Array(Array String) -> State (Map String (List String)) Unit
@@ -91,5 +57,46 @@ createMap str =
                                              (fromMaybe " " $ head n)
                                              (Li.singleton $ fromMaybe " " $ last n)
                                              sum
+
+createTreeMaybe :: Map String (List String) -> String -> Maybe (Tree String)
+createTreeMaybe mp str = do
+  let t = str :< Nil
+  crtTreeMaybe (Just t) (Li.singleton str)
+  where
+    crtTreeMaybe :: Maybe (Tree String) -> List String ->  Maybe (Tree String)
+    crtTreeMaybe t Nil = t
+    crtTreeMaybe t (x:xs) =
+      crtTreeMaybe nnt xs
+      where
+        lu = fromMaybe Nil $ Map.lookup x mp
+        nt = modifyTreeList t x lu
+        nnt = crtTreeMaybe nt lu
+
+sumTree :: Tree String -> Int
+sumTree t =
+  foldl (\sum el -> sum + (Li.length $ parents $ fromMaybe (fromTree ("error" :< Nil)) $ findDown el lo)) 0 t
+  where
+    lo = fromTree t
+
+silver :: String -> Int
+silver text = sumTree (fromMaybe ("1" :< Nil) $ createTreeMaybe (createMap text) "COM")
+
+gold :: String -> Int
+gold text =
+  let
+    t = createTreeMaybe (createMap text) "COM"
+    lo = fromTree (fromMaybe ("error" :< Nil) t)
+    findDis :: Loc String -> String -> Int -> Maybe Int
+    findDis l str sum = if isNothing (findDown str l) then
+                          if isNothing (up l) then
+                            Nothing
+                          else
+                            findDis (fromMaybe (fromTree ("error" :< Nil)) (up l)) str (sum+1)
+                        else
+                          (+) <$> ((-) <$> (Li.length <$> parents <$> findDown str l) <*> (Just (Li.length $ parents $ l))) <*> (Just sum)
+
   in
-    execState (crtMap tup) Map.empty
+    if isNothing (findDown "YOU" lo) || isNothing (findDown "SAN" lo) then
+      0
+    else
+      fromMaybe 0 $ (-) <$> (findDis (fromMaybe (fromTree ("error" :< Nil)) (findDown "YOU" lo)) "SAN" 0) <*> (Just 2)
