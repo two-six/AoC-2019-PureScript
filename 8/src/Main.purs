@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 
-import Data.Array (drop, filter, head, length, snoc, take, (:))
+import Data.Array (drop, filter, head, length, snoc, take)
 import Data.Int (decimal, fromString, toStringAs)
 import Data.Maybe (fromMaybe)
 import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll, split, trim)
@@ -32,16 +32,18 @@ silver str =
 gold :: String -> String
 gold str =
   let
-    arr = groupArray (readNumbers str) (6*25)
-    arr1 = extractPixels arr
-    arr2 = map (filter (_ /= 2)) arr1
-    arr3 = map (\n -> fromMaybe 2 $ head n) arr2
-    arr4 = groupArray arr3 25
-    arr5 = map (map (toStringAs decimal)) arr4
-    arr6 = map (joinWith "") arr5
-    arr7 = joinWith "\n" arr6
-    arr8 = replaceAll (Pattern "0") (Replacement " ") arr7
-    res = replaceAll (Pattern "1") (Replacement "█") arr8
+    res = replaceAll (Pattern "1") (Replacement "█")
+        $ replaceAll (Pattern "0") (Replacement " ")
+        $ joinWith "\n"
+        $ map (joinWith "")
+        $ map (map (toStringAs decimal))
+        $ groupArray
+        ( map (\n -> fromMaybe 2 $ head n)
+        $ map (filter (_ /= 2))
+        $ extractPixels
+        $ groupArray (readNumbers str) (6*25)
+        )
+        25
   in
     res
 
