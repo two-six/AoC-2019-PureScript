@@ -16,3 +16,9 @@ Wish it was explained better. Problem itself was not that hard but I spent a lot
 
 * Day 6
 I definitely can't into trees but it works despite it terrible performance.
+
+* Day 7
+I did it but somehow lost the code and don't want to do it again now. I'll add it soon.
+
+* Day 8
+Simple and fun :)
