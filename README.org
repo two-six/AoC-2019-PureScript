@@ -13,3 +13,6 @@ Easy one, just some guards.
 
 * Day 5
 Wish it was explained better. Problem itself was not that hard but I spent a lot of time trying to find a bug in a correct code, just because I didn't understand how to run it properly.
+
+* Day 6
+I definitely can't into trees but it works despite it terrible performance.
