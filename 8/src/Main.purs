@@ -2,10 +2,10 @@ module Main where
 
 import Prelude
 
-import Data.Array (drop, filter, head, length, take, (:))
-import Data.Int (fromString)
+import Data.Array (drop, filter, head, length, snoc, take, (:))
+import Data.Int (decimal, fromString, toStringAs)
 import Data.Maybe (fromMaybe)
-import Data.String (Pattern(..), split, trim)
+import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll, split, trim)
 import Effect (Effect)
 import Effect.Console (log)
 import Node.Encoding (Encoding(..))
@@ -15,33 +15,49 @@ main :: Effect Unit
 main = do
   text <- readTextFile UTF8 "input.txt"
   log $ "Silver: " <> (show $ silver text)
+      <> "\nGold:\n" <> gold text
 
 readNumbers :: String -> Array Int
 readNumbers = map (fromMaybe 0 <<< fromString) <<< split (Pattern "") <<< trim
 
 silver :: String -> Int
 silver str =
-  let
+  (length oneArr) * (length twoArr)
+  where
     arr = groupArray (readNumbers str) (6*25)
     fArr = largestArrWithout0 arr
     oneArr = filter (_ == 1) fArr
     twoArr = filter (_ == 2) fArr
-  in
-   (length oneArr) * (length twoArr)
 
-groupArray :: Array Int -> Int -> Array(Array Int)
-groupArray arr n =
+gold :: String -> String
+gold str =
   let
-    insFunc :: Array Int -> Int -> Array(Array Int) -> Array(Array Int)
+    arr = groupArray (readNumbers str) (6*25)
+    arr1 = extractPixels arr
+    arr2 = map (filter (_ /= 2)) arr1
+    arr3 = map (\n -> fromMaybe 2 $ head n) arr2
+    arr4 = groupArray arr3 25
+    arr5 = map (map (toStringAs decimal)) arr4
+    arr6 = map (joinWith "") arr5
+    arr7 = joinWith "\n" arr6
+    arr8 = replaceAll (Pattern "0") (Replacement " ") arr7
+    res = replaceAll (Pattern "1") (Replacement "█") arr8
+  in
+    res
+
+groupArray :: forall a. Array a -> Int -> Array(Array a)
+groupArray arr n =
+  insFunc arr n []
+  where
+    insFunc :: forall a. Array a -> Int -> Array(Array a) -> Array(Array a)
     insFunc [] _ res = res
     insFunc arr' n' res =
-      insFunc (drop n' arr') n' ((take n' arr'):res)
-  in
-    insFunc arr n []
+      insFunc (drop n' arr') n' (snoc res (take n' arr'))
 
 largestArrWithout0 :: Array (Array Int) -> Array Int
 largestArrWithout0 arr =
-  let
+  findArr filtArr [] 0
+  where
     findArr :: Array (Array Int) -> Array Int -> Int -> Array Int
     findArr [] arr' _ = arr'
     findArr aArr arr' n =
@@ -58,5 +74,16 @@ largestArrWithout0 arr =
       where
         curArr = fromMaybe [] $ head aArr
     filtArr = map (filter (_ /= 0)) arr
-  in
-   findArr filtArr [] 0
+
+extractPixels :: Array (Array Int) -> Array (Array Int)
+extractPixels arr =
+  exPixels arr []
+  where
+    exPixels :: Array (Array Int) -> Array (Array Int) -> Array (Array Int)
+    exPixels [] nArr = nArr
+    exPixels oArr nArr =
+      exPixels nOArr nNArr
+      where
+        tmpOArr = map (drop 1) oArr
+        nOArr = filter (\n -> length n /= 0) tmpOArr
+        nNArr = snoc nArr (map (\n -> fromMaybe 0 $ head n) oArr)
